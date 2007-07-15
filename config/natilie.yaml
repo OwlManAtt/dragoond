@@ -1,0 +1,11 @@
+database_dsn:
+    phptype: mysql
+    username: dragoon_db 
+    password: password 
+    database: dragoon_user 
+    hostspec: localhost
+
+name: Natilie (Sample) 
+log_dir: /var/log/dragoon_logs
+module_dir: /use/share/dragoond/modules
+debug: 0 
