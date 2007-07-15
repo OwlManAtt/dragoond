@@ -32,7 +32,7 @@ class Dragoond extends Daemonize
 {
     protected $db = null;
     protected $dragoon_name = 'Uninitialized Dragoon';
-    protected $debug_level = 0;
+    protected $debug_level = 2;
     protected $log = null;
     private $log_dir = '/tmp/dragoond/log';
     private $module_dir = null;
@@ -59,7 +59,30 @@ class Dragoond extends Daemonize
 
     public function start()
     {
-        // TODO - Create better loggers based on debug level.
+        $composite_log = Log::singleton('composite'); 
+        $console_log = Log::singleton('console','',$this->dragoon_name,array('timeFormat' => '%Y-%m-%d %H:%M:%S')); 
+        $file_log = Log::singleton('file',"{$this->log_dir}/dragoon.log",$this->dragoon_name,array('timeFormat' => '%Y-%m-%d %H:%M:%S'));
+
+        if($this->debug == 0)
+        {
+            $file_log->setMask((PEAR_LOG_ALL ^ Log::MASK(PEAR_LOG_INFO)));
+        }
+        elseif($this->debug == 1)
+        {
+            $file_log->setMask((PEAR_LOG_ALL ^ Log::MASK(PEAR_LOG_DEBUG)));
+        }
+        elseif($this->debug >= 2)
+        {
+            $file_log->setMask(PEAR_LOG_ALL); 
+        }
+       
+        // The console logger will just write out emergency messages. 
+        $console_log->setMask(PEAR_LOG_NONE ^ Log::MASK(PEAR_LOG_EMERG));
+        $composite_log->addChild($console_log);
+        $composite_log->addChild($file_log);
+        $this->log = $composite_log;
+        
+        $this->logMessage("Advanced logging set up; moving to initalize daemon.",'debug');
 
         return parent::start();
     } // end start
@@ -121,7 +144,8 @@ class Dragoond extends Daemonize
     // Magic goes here.
     protected function doTask()
     {
-
+        $this->db->query('SHOW TABLES');
+        sleep(10);
     } // end doTask
    
     protected function logMessage($msg,$level='notice')
@@ -138,18 +162,16 @@ class Dragoond extends Daemonize
             'emergency' => PEAR_LOG_EMERG,
         ); // pear levels
 
-        $level = $PEAR_LEVELS[$level];
-        $level = ($level == null ? PEAR_LOG_INFO : $level); 
-
-        if(is_a($this->log,'Log') == true)
+        if(array_key_exists($level,$PEAR_LEVELS))
         {
-            $this->log->log($msg,$level);
+            $level = $PEAR_LEVELS[$level];
         }
         else
         {
-            // Fall back to *something*...
-            print "FALLBACK-LOG: $msg\n";
+            $level = $PEAR_LEVELS['info'];
         }
+        
+        $this->log->log($msg,$level);
        
         return null; 
     } // end logMessage

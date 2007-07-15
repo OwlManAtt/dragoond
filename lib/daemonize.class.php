@@ -112,7 +112,7 @@ abstract class Daemonize
     */
     public function start()
     {
-        $this->logMessage('Starting daemon');
+        $this->logMessage('Starting daemon','info');
 
         if(!$this->_daemonize())
         {
@@ -126,7 +126,7 @@ abstract class Daemonize
 
         while($this->_isRunning)
         {
-            $this->_doTask();
+            $this->doTask();
         }
 
         return true;
@@ -308,7 +308,7 @@ abstract class Daemonize
     * @access public
     * @return void
     */
-    protected function sigHandler($sigNo)
+    public function sigHandler($sigNo)
     {
         switch($sigNo)
         {

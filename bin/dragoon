@@ -3,5 +3,6 @@
 include('dragoond.php');
 
 $dragoon = new Dragoond('config/zeferis.yaml');
+$dragoon->start();
 
 ?>
