@@ -8,8 +8,13 @@
  * @version 0.0.1 dev
  **/
 
-// TODO
-// Fuckton of require goes here.
+/**
+ * 
+ **/
+require_once('aphp/aphp.php');
+require_once('spyc/spyc.php');
+
+require_once('lib/daemonize.class.php');
 
 /**
  *
@@ -18,11 +23,31 @@
  * @copyright 2007, Yasashii Syndicate
  * @version: Release: @package_version@
  **/
-class Dragoond
+class Dragoond extends Daemonize
 {
-   // TODO.
-   // Magic goes here.
+    public function __construct($config)
+    {
+        parent::__construct();
+
+        // Load & parse YAML.
+        // Validate YAML.
+
+    } // end __construct
+    
+    // Magic goes here.
+    protected function doTask()
+    {
+
+    } // end doTask
+   
+    protected function logMessage($msg,$level = DLOG_NOTICE)
+    {
+        print $msg."\n";
+    } // end logMessage
     
 } // end Dragoond
+
+$foo = new Dragoond('config/zeferis.yaml');
+// $foo->start();
 
 ?>
