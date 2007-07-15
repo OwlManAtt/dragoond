@@ -6,6 +6,9 @@ database_dsn:
     hostspec: localhost
 
 name: Natilie (Sample) 
+uid: 1001
+gid: 1001
+home_dir: /usr/share/dragoond
 log_dir: /var/log/dragoon_logs
 module_dir: /use/share/dragoond/modules
 debug: 0 

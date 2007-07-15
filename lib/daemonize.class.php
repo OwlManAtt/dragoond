@@ -12,15 +12,6 @@
  */
 
 /**
- * Log message levels.
- **/
-define('DLOG_TO_CONSOLE', 1);
-define('DLOG_NOTICE', 2);
-define('DLOG_WARNING', 4);
-define('DLOG_ERROR', 8);
-define('DLOG_CRITICAL', 16);
-
-/**
  * Daemon base class
  *
  * Requirements:
@@ -37,6 +28,8 @@ define('DLOG_CRITICAL', 16);
  */
 abstract class Daemonize
 {
+   protected $log = null;
+    
    /**
     * User ID
     * 
@@ -104,7 +97,7 @@ abstract class Daemonize
     */
    public function __construct()
    {
-      error_reporting(0);
+      // error_reporting(0);
       set_time_limit(0);
       ob_implicit_flush();
 
@@ -123,7 +116,7 @@ abstract class Daemonize
 
         if(!$this->_daemonize())
         {
-            $this->logMessage('Could not start daemon',DLOG_ERROR);
+            $this->logMessage('Could not start daemon','error');
 
             return false;
         } // end deamonize fail
@@ -165,7 +158,7 @@ abstract class Daemonize
      * @access protected
      * @return void
      **/
-    abstract protected function logMessage($msg, $level = DLOG_NOTICE);
+    abstract protected function logMessage($msg, $level = 'notice');
    
    /**
     * Daemonize
@@ -206,14 +199,14 @@ abstract class Daemonize
 
         if(!posix_setsid())
         {
-            $this->logMessage('Could not make the current process a session leader',DLOG_ERROR);
+            $this->logMessage('Could not make the current process a session leader','error');
 
             return false;
         }
 
         if(!$fp = @fopen($this->pidFileLocation,'w'))
         {
-            $this->logMessage('Could not write to PID file', DLOG_ERROR);
+            $this->logMessage('Could not write to PID file','error');
 
             return false;
         } // end pidfail
@@ -246,7 +239,7 @@ abstract class Daemonize
 
         if ($oldPid !== false && posix_kill(trim($oldPid),0))
         {
-            $this->logMessage('Daemon already running with PID: '.$oldPid,(DLOG_TO_CONSOLE | DLOG_ERROR));
+            $this->logMessage('Daemon already running with PID: '.$oldPid,'error');
 
             return true;
         }
@@ -270,7 +263,7 @@ abstract class Daemonize
 
         if($pid == -1) // error
         {
-            $this->logMessage('Could not fork', DLOG_ERROR);
+            $this->logMessage('Could not fork','error');
 
             return false;
         }
@@ -299,7 +292,7 @@ abstract class Daemonize
     {
         if(!posix_setgid($this->groupID) || !posix_setuid($this->userID))
         {
-            $this->logMessage('Could not set identity', DLOG_WARNING);
+            $this->logMessage('Could not set identity','warning');
 
             return false;
         }

@@ -1,0 +1,7 @@
+#!/usr/bin/php
+<?php
+include('dragoond.php');
+
+$dragoon = new Dragoond('config/zeferis.yaml');
+
+?>
