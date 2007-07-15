@@ -1,7 +1,7 @@
 #!/bin/bash
 db=zeferis
 dbuser=root
-tables=( jump_page board )
+tables=( data_handler )
 
 if [ "$1" = '' ]
 then
@@ -13,5 +13,5 @@ mysqldump -d -u $dbuser --password=$1 $db > ddl.sql
 
 for table in  ${tables[@]}
 do
-    mysqldump -t -c -u $db --password=$1 $db $table > data/${table}.sql
+    mysqldump -t -c -u $dbuser --password=$1 $db $table > data/${table}.sql
 done
