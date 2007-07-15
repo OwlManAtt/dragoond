@@ -21,6 +21,12 @@ require_once('spyc/spyc.php');
  **/
 require_once('lib/daemonize.class.php');
 
+// Load core classes.
+foreach(glob('libs/core/*.class.php') as $filename)
+{
+    require($filename);
+}
+
 /**
  *
  * @package Dragoond
