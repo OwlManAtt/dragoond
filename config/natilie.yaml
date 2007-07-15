@@ -12,3 +12,8 @@ home_dir: /usr/share/dragoond
 log_dir: /var/log/dragoon_logs
 module_dir: /use/share/dragoond/modules
 debug: 0 
+
+default_modules:
+    - foo
+    - bar
+    - baz

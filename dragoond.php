@@ -22,7 +22,7 @@ require_once('spyc/spyc.php');
 require_once('lib/daemonize.class.php');
 
 // Load core classes.
-foreach(glob('libs/core/*.class.php') as $filename)
+foreach(glob('lib/core/*.class.php') as $filename)
 {
     require($filename);
 }
@@ -40,6 +40,9 @@ class Dragoond extends Daemonize
     protected $dragoon_name = 'Uninitialized Dragoon';
     protected $debug_level = 2;
     protected $log = null;
+    protected $loaded_modules = array();
+    protected $module_load_queue = array();
+    protected $module_unload_queue = array();
     private $log_dir = '/tmp/dragoond/log';
     private $module_dir = null;
     
@@ -123,6 +126,11 @@ class Dragoond extends Daemonize
         $this->log_dir = $config['log_dir'];
         $this->module_dir = $config['module_dir'];
 
+        if(is_array($config['default_modules']))
+        {
+            $this->module_load_queue = $config['default_modules'];
+        }
+
         return $return;
     } // end configure 
 
@@ -150,9 +158,75 @@ class Dragoond extends Daemonize
     // Magic goes here.
     protected function doTask()
     {
-        $this->db->query('SHOW TABLES');
-        sleep(10);
+        if($this->foo == null)
+        {
+            $this->foo = 0;
+        }
+
+        if($this->foo == 10)
+        {
+            $this->logMessage('Cycle...');
+            $this->foo = 0;
+        }
+        else
+        {
+            $this->foo++;
+        }
+        
+        
+        $this->handleModuleQueues();
+         
+        sleep(3);
     } // end doTask
+
+    private function handleModuleQueues()
+    {
+        if(sizeof($this->module_unload_queue) > 0)
+        {
+            foreach($this->module_unload_queue as $index => $module)
+            {
+                if(array_key_exists($module,$this->loaded_modules) == false)
+                {
+                    $this->logMessage("Module '$module' not loaded - cannot unload.",'info');
+                    continue;
+                }
+
+                $this->loaded_modules[$module]['instance']->unload();
+                unset($this->loaded_modules[$module]);
+                unset($this->module_unload_queue[$index]);
+            } // end unload loop
+        } // end unload
+
+        if(sizeof($this->module_load_queue) > 0)
+        {
+            foreach($this->module_load_queue as $index => $module)
+            {   
+                if(array_key_exists($module,$this->loaded_modules) == true)
+                {
+                    $this->logMessage("Could not load '$module' - it is already loaded.",'info');
+                    continue;
+                } // end module is loaded
+
+                $module_path = "{$this->module_dir}/$module/$module.class.php";
+
+                $this->logMessage("Module $module_path being loaded...",'debug');
+
+                runkit_import($module_path,RUNKIT_IMPORT_OVERRIDE);
+                $class = str_replace('_',null,$module);
+                $this->logMessage("Loading class $class...");
+
+                $php = '$module_instance = new '.$class.'();';
+                eval($php);
+                
+                $this->loaded_modules[$module] = $module_instance->getModuleInfo();
+                $this->loaded_modules[$module]['instance'] = $module_instance;
+                $this->loaded_modules[$module]['instance']->load();
+
+                unset($this->module_load_queue[$index]);
+            } // end load loop
+
+        } // end load
+    } // end handleModuleQueues
    
     protected function logMessage($msg,$level='notice')
     {
