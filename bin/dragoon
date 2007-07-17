@@ -2,7 +2,7 @@
 <?php
 include('dragoond.php');
 
-$dragoon = new Dragoond('config/zeferis.yaml');
+$dragoon = new Dragoond('config/zefiris.yaml');
 $dragoon->start();
 
 ?>

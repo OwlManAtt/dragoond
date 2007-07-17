@@ -62,7 +62,7 @@ abstract class DragoonModule implements DragoonModuleInterface
             $level = $PEAR_LEVELS['info'];
         }
 
-        $log->log($msg,$level);
+        $log->log($message,$level);
 
         return null;  
     } // end logMessage

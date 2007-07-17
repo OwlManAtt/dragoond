@@ -315,6 +315,7 @@ abstract class Daemonize
             case SIGTERM:   // Shutdown
             {
                 $this->logMessage('Shutdown signal');
+                $this->stop();
                 exit();
                 
                 break;

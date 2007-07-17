@@ -96,6 +96,25 @@ class Dragoond extends Daemonize
         return parent::start();
     } // end start
 
+    public function stop()
+    {
+        $this->logMessage('Dragoon received stop command.','notice');
+        
+        // Move module names to unload queue, fire the processor off, and then
+        // do the teardown.
+        $this->logMessage('Clearing module load queue & queing all loaded modules for unload...');
+        $this->module_load_queue = array(); // Clear any pending modules out.
+        $this->module_unload_queue = array_keys($this->loaded_modules);
+        $this->handleModuleQueues();
+        $this->logMessage('All modules should have been unloaded.','info');
+        
+        $this->logMessage('Dropping database connection...','debug');
+        $this->db->disconnect();
+
+        $this->logMessage('Escalating shutdown to daemonizer.','debug');
+        parent::stop();
+    } // end stop
+
     protected function configure($file)
     {
         $return = true;
@@ -183,6 +202,8 @@ class Dragoond extends Daemonize
     {
         if(sizeof($this->module_unload_queue) > 0)
         {
+            $this->module_unload_queue = array_unique($this->module_unload_queue);
+            
             foreach($this->module_unload_queue as $index => $module)
             {
                 if(array_key_exists($module,$this->loaded_modules) == false)
@@ -201,6 +222,8 @@ class Dragoond extends Daemonize
         {
             foreach($this->module_load_queue as $index => $module)
             {   
+                $this->module_load_queue = array_unique($this->module_load_queue);
+
                 if(array_key_exists($module,$this->loaded_modules) == true)
                 {
                     $this->logMessage("Could not load '$module' - it is already loaded.",'info');
