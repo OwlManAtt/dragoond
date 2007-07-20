@@ -177,25 +177,20 @@ class Dragoond extends Daemonize
     // Magic goes here.
     protected function doTask()
     {
-        if($this->foo == null)
-        {
-            $this->foo = 0;
-        }
-
-        if($this->foo == 10)
-        {
-            $this->logMessage('Cycle...');
-            $this->foo = 0;
-        }
-        else
-        {
-            $this->foo++;
-        }
-        
-        
+        // Deal with loading/unloading modules.
         $this->handleModuleQueues();
-         
-        sleep(3);
+
+        // Deal with the scheduled methods.
+        foreach($this->loaded_modules as $module_name => $MODULE)
+        {
+            foreach($MODULE['registered_run_methods'] as $method)
+            {
+                call_user_func_array(array(&$MODULE['instance'],$method['method']),$method['args']);
+            } // end method loop
+        } // end module loop
+        
+        // Rest to give the CPU a bread. 
+        sleep(2);
     } // end doTask
 
     private function handleModuleQueues()
@@ -234,22 +229,37 @@ class Dragoond extends Daemonize
 
                 $this->logMessage("Module $module_path being loaded...",'debug');
 
-                runkit_import($module_path,RUNKIT_IMPORT_OVERRIDE);
+                runkit_import($module_path,RUNKIT_IMPORT_OVERRIDE | RUNKIT_IMPORT_CLASSES);
                 $class = str_replace('_',null,$module);
                 $this->logMessage("Loading class $class...");
 
-                $php = '$module_instance = new '.$class.'();';
+                $php = '$module_instance = new '.$class.'(&$this);';
                 eval($php);
                 
                 $this->loaded_modules[$module] = $module_instance->getModuleInfo();
+                $this->loaded_modules[$module]['registered_run_methods'] = array();
                 $this->loaded_modules[$module]['instance'] = $module_instance;
-                $this->loaded_modules[$module]['instance']->load();
+                if($this->loaded_modules[$module]['instance']->load() == false)
+                {
+                    $this->logMessage("$module could not be successfully loaded.",'notice');
+                    unset($this->loaded_modules[$module]);
+                }
 
                 unset($this->module_load_queue[$index]);
             } // end load loop
-
         } // end load
     } // end handleModuleQueues
+
+    public function registerRunMethod($module,$method_name,$args=array())
+    {
+        $this->loaded_modules[$module]['registered_run_methods'][] = array(
+            'method' => $method_name,
+            'args' => $args,
+        );
+
+        return true;
+    } // end registerRunMethod
+    
    
     protected function logMessage($msg,$level='notice')
     {

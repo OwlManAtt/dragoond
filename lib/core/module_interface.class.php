@@ -6,6 +6,7 @@ interface DragoonModuleInterface
     #protected $module_author;
     #protected $module_type;
 
+    public function __construct(&$dragoon);
     public function load();
     public function unload();
     public function reload();
@@ -19,6 +20,12 @@ abstract class DragoonModule implements DragoonModuleInterface
     protected $module_version = '0.0.0';
     protected $module_author = 'N/A';
     protected $module_type = 'FAKE';
+    protected $dragoon = null;
+
+    public function __construct(&$dragoon)
+    {
+        $this->dragoon = $dragoon;
+    } // end __construct
 
     public function reload()
     {
@@ -66,7 +73,6 @@ abstract class DragoonModule implements DragoonModuleInterface
 
         return null;  
     } // end logMessage
-    
 } // end DragoonModule
 
 ?>
