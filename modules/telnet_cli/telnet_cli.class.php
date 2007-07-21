@@ -6,8 +6,9 @@ class TelnetCli extends DragoonModule
     protected $module_author = 'OwlManAtt <owlmanatt@gmail.com>';
     protected $module_type = 'Frontend';
 
-    public function __construct()
+    public function __construct(&$dragoon)
     {
+        parent::__construct(&$dragoon);
         $this->logMessage('__construct()ing telnet frontend module...');
     } // end __construct
 
@@ -15,28 +16,6 @@ class TelnetCli extends DragoonModule
     {
         $this->logMessage('load()ing telnet frontend module...');
 
-        /*
-        $socket = stream_socket_server("tcp://0.0.0.0:8000", $errno, $errstr);
-        if (!$socket) 
-        {
-            return false; 
-        } 
-        else 
-        {
-            while($conn = stream_socket_accept($socket)) 
-            {
-                fwrite($conn,"Greetings. I am Zefiris.\n");
-                fwrite($conn,"root@dragoon # ");
-                stream_socket_recvfrom($socket,200);
-                fclose($conn);
-
-                break;
-            }
-            fclose($socket);
-        }
-        */
-
-        $this->logMessage('Telnet module loaded.');
     } // end load
     
     public function unload()

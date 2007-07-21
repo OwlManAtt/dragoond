@@ -105,9 +105,15 @@ class JabberFrontend extends DragoonModule
 
         if($this->connect())
         {
-            $this->dragoon->registerRunMethod('jabber_frontend','cruisecontrol',array(1));
-            $this->sendAuth();
-            $this->SendPresence(null,null,'online');
+            if($this->sendAuth())
+            {
+                $this->SendPresence(null,null,'online');
+                $this->dragoon->registerRunMethod('jabber_frontend','cruisecontrol',array(1));
+            }
+            else
+            {
+                $this->logMessage('Could not authenticate to Jabber server.','crit');
+            }
         }
         else
         {
@@ -134,7 +140,7 @@ class JabberFrontend extends DragoonModule
 			$this->SendPacket("<?xml version='1.0' encoding='UTF-8' ?" . ">\n");
 			$this->SendPacket("<stream:stream to='{$this->server}' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams'>\n");
 
-			sleep(2);
+			sleep(5);
 
 			if($this->_check_connected())
 			{
@@ -179,13 +185,15 @@ class JabberFrontend extends DragoonModule
 		// request available authentication methods
 		$payload	= "<username>{$this->username}</username>";
 		$packet		= $this->SendIq(NULL, 'get', $this->auth_id, "jabber:iq:auth", $payload);
+        sleep(2);
 
 		// was a result returned?
 		if($this->GetInfoFromIqType($packet) == 'result' && $this->GetInfoFromIqId($packet) == $this->auth_id)
 		{
 			// yes, now check for auth method availability in descending order (best to worst)
 
-			if(!function_exists(mhash))
+			// if(!function_exists(mhash))
+			if(false)
 			{
 				$this->logMessage("ATTENTION: SendAuth() - mhash() is not available; screw 0k and digest method, we need to go with plaintext auth",'notice');
 			}
@@ -1136,7 +1144,25 @@ class JabberFrontend extends DragoonModule
 	private function Handler_message_normal($packet)
 	{
 		$from = $packet['message']['@']['from'];
-		$this->logMessage("EVENT: Message (type normal) from $from",'debug');
+        $from_parts = explode('/',$from);
+        $from = $from_parts[0]; // owlmanatt@yasashiisyndicate.org
+        $from_resource = $from_parts[1]; // /Adium
+        
+        if(is_array($packet['message']['#']['body']) == true)
+        {
+            $message = $packet['message']['#']['body'][0]['#'];
+            $this->logMessage("EVENT: Message (type normal) from $from: $message",'debug');
+
+            if(preg_match("/^{$this->dragoon->getDragoonName()}, (.*)$/i",$message,$MATCHES) == true)
+            {
+                if(preg_match('/^reload module ([a-z0-9_]+)/i',$MATCHES[1],$MODULE_NAME) == true)
+                {
+                    $this->logMessage("Received command to reload {$MODULE_NAME[1]}.");
+                    $this->dragoon->queueModuleReload($MODULE_NAME[1]);
+                } // end reload
+            } // end command
+            
+        } // end is message
 	} // end Handler_message_normal
 
 	private function Handler_message_chat($packet)
@@ -1530,44 +1556,5 @@ class JabberFrontend extends DragoonModule
 		}
 	}
 } // end JabberFrontend
-
-class CJP_StandardConnector
-{
-	protected $active_socket;
-
-	public function openSocket($server, $port)
-	{
-		if($this->active_socket = fsockopen($server, $port))
-		{
-			socket_set_blocking($this->active_socket, 0);
-			socket_set_timeout($this->active_socket, 31536000);
-
-			return TRUE;
-		}
-		else
-		{
-			return FALSE;
-		}
-	} // end openSocket
-
-	public function closeSocket()
-	{
-		return fclose($this->active_socket);
-	} // end closeSocket
-
-	public function writeToSocket($data)
-	{
-		return fwrite($this->active_socket, $data);
-	} // end writeTosocket
-
-	public function readFromSocket($chunksize)
-	{
-		set_magic_quotes_runtime(0);
-		$buffer = fread($this->active_socket, $chunksize);
-		set_magic_quotes_runtime(get_magic_quotes_gpc());
-
-		return $buffer;
-	} // end readFromSocket
-} // end CJP_StandardConnector
 
 ?>

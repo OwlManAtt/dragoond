@@ -154,6 +154,16 @@ class Dragoond extends Daemonize
     } // end configure 
 
     /**
+     * Get the Dragoon's name.
+     *
+     * @return string
+     **/
+    public function getDragoonName()
+    {
+        return $this->dragoon_name;
+    } // end getDragoonName
+
+    /**
      * A wrapper for creating a PEAR::DB connection instance.
      *
      * @param array PEAR::DB DSN
@@ -193,6 +203,22 @@ class Dragoond extends Daemonize
         sleep(2);
     } // end doTask
 
+    public function queueModuleLoad($module_name)
+    {
+        $this->module_load_queue[] = $module_name;
+    } // end queueModuleLoad
+
+    public function queueModuleUnload($module_name)
+    {
+        $this->module_unload_queue[] = $module_name;
+    } // end queueModuleUnload
+
+    public function queueModuleReload($module_name)
+    {
+        $this->queueModuleUnload($module_name);
+        $this->queueModuleLoad($module_name);
+    } // end queueModuleReload
+
     private function handleModuleQueues()
     {
         if(sizeof($this->module_unload_queue) > 0)
@@ -229,11 +255,30 @@ class Dragoond extends Daemonize
 
                 $this->logMessage("Module $module_path being loaded...",'debug');
 
-                runkit_import($module_path,RUNKIT_IMPORT_OVERRIDE | RUNKIT_IMPORT_CLASSES);
+                // Hack module loader - dynamically rename the class definition
+                // so it's unique and eval it in. Ideally, this would use runkit - see below.
                 $class = str_replace('_',null,$module);
+                $class_with_suffix = $class.'__'.time();
+               
+                $file = ''; 
+                $file = trim(`cat $module_path`);
+
+                // Rename the class, strip shit tags.
+                $file = preg_replace("/class $class extends DragoonModule/i","class $class_with_suffix extends DragoonModule",$file);
+                $file = preg_replace('/^<\?php/i',null,$file);
+                $file = preg_replace('/\?>$/',null,$file);
+
+                // *gulp*
+                eval($file);
+                unset($file);
+                
+                // Runkit does not function properly. This is a desired way to load modules,
+                // but it won't work. Please se PECL bug #11656 for details.
+                // runkit_import($module_path,RUNKIT_IMPORT_CLASSES | RUNKIT_IMPORT_OVERRIDE);
+                
                 $this->logMessage("Loading class $class...");
 
-                $php = '$module_instance = new '.$class.'(&$this);';
+                $php = '$module_instance = new '.$class_with_suffix.'(&$this);';
                 eval($php);
                 
                 $this->loaded_modules[$module] = $module_instance->getModuleInfo();
