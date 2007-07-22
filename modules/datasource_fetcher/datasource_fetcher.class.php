@@ -81,8 +81,8 @@ class DatasourceFetcher extends DragoonModule
             fclose($file_handle);
            
             // TODO - Send the newly-GET'd resource to its handler.
-            $datasource->setDatetimeLastFetch($datasource->sysdate()); 
-            $datasource->save();
+            $source->setDatetimeLastFetch($source->sysdate()); 
+            $source->save();
         } // end loop
     } // end fetchUpdates
     
