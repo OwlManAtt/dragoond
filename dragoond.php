@@ -311,7 +311,26 @@ class Dragoond extends Daemonize
 
         return true;
     } // end registerRunMethod
-    
+   
+    // Route a datasource's fatched data to a handler module.
+    public function handleDatasource($cached_file_path,$datasource_handler_module)
+    {
+        if(array_key_exists($datasource_handler_module,$this->loaded_modules) == false)
+        {
+            $this->logMessage("Handler $datasource_handler_module is not loaded. Cannot process.",'notice');
+
+            return false;
+        } // module not loaded
+
+        if(method_exists($this->loaded_modules[$datasource_handler_module]['instance'],'handle') == false)
+        {
+            $this->logMessage("Handler $datasource_handler_module does not have #handle() method defined. Cannot proceed.",'notice');
+            
+            return false;
+        } // datahandler method undefined
+
+        return $this->loaded_modules[$datasource_handler_module]['instance']->handle($cached_file_path);
+    } // end handleDatasource
    
     protected function logMessage($msg,$level='notice')
     {

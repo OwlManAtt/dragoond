@@ -16,3 +16,4 @@ debug: 0
 default_modules:
     - datasource_fetcher
     - jabber_frontend 
+    - rss_reader

@@ -342,6 +342,9 @@ class JabberFrontend extends DragoonModule
 
 	public function sendMessage($to, $type = "normal", $id = NULL, $content = NULL, $payload = NULL)
 	{
+        // $this->logMessage("'$to'",'debug');
+        // $this->logMessage(print_r($content,true),'debug');
+        
 		if($to && is_array($content))
 		{
 			if(!$id)
@@ -363,7 +366,7 @@ class JabberFrontend extends DragoonModule
 				$xml .= "<thread>" . $content['thread'] . "</thread>\n";
 			}
 
-			$xml .= "<body>" . $content['body'] . "</body>\n";
+			$xml .= "<body>" . htmlentities($content['body']) . "</body>\n";
 			$xml .= $payload;
 			$xml .= "</message>\n";
 
@@ -1143,8 +1146,8 @@ class JabberFrontend extends DragoonModule
 
 	private function Handler_message_normal($packet)
 	{
-		$from = $packet['message']['@']['from'];
-        $from_parts = explode('/',$from);
+		$from_string = $packet['message']['@']['from'];
+        $from_parts = explode('/',$from_string);
         $from = $from_parts[0]; // owlmanatt@yasashiisyndicate.org
         $from_resource = $from_parts[1]; // /Adium
         
@@ -1182,6 +1185,28 @@ class JabberFrontend extends DragoonModule
                         } // end reload
                     } // end (un|re)?load switch
                 } // end reload
+                elseif(preg_match('/^refresh datasource ([0-9]+)/i',$MATCHES[1],$MODULE_NAME) == true)
+                {
+                    $source = new Datasource($this->db);
+                    $source = $source->findByDatasourceId($MODULE_NAME[1]);
+                    $source = $source[0];
+                    
+                    if(is_a($source,'Datasource'))
+                    {
+                        $source->setDatetimeLastFetch(0);
+                        $source->save();
+
+                        $this->sendMessage($from,'normal',null,array('body' => "{$source->getDescription()} flagged.",),null);
+                    } // end isa
+                    else
+                    {
+                        $this->sendMessage($from,'normal',null,array('body' => "Sorry, I can't find that datasource.",),null);
+
+                    }
+                } // end datasource refresher
+
+                
+                
             } // end command
             
         } // end is message
