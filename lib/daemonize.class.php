@@ -124,6 +124,7 @@ abstract class Daemonize
         $this->logMessage('Running...');
         $this->_isRunning = true;
 
+        $this->prepareDaemon();
         while($this->_isRunning)
         {
             $this->doTask();
@@ -151,6 +152,13 @@ abstract class Daemonize
     * @return void
     */
     abstract protected function doTask();
+    
+    /**
+     * Executes just prior to the daemon's main loop starting.
+     * 
+     * @return void
+     **/
+    abstract protected function prepareDaemon();
 
     /**
      * Logs message

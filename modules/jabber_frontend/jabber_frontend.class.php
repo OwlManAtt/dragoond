@@ -40,9 +40,9 @@ class JabberFrontend extends DragoonModule
 
 	protected $CONNECTOR;
 
-    public function __construct(&$dragoon)
+    public function __construct(&$dragoon,&$db)
 	{
-        parent::__construct(&$dragoon);
+        parent::__construct(&$dragoon,&$db);
 
         $this->logMessage("Constructing Jabber frontend module."); 
         
@@ -1155,10 +1155,32 @@ class JabberFrontend extends DragoonModule
 
             if(preg_match("/^{$this->dragoon->getDragoonName()}, (.*)$/i",$message,$MATCHES) == true)
             {
-                if(preg_match('/^reload module ([a-z0-9_]+)/i',$MATCHES[1],$MODULE_NAME) == true)
+                if(preg_match('/^(load|unload|reload) module ([a-z0-9_]+)/i',$MATCHES[1],$MODULE_NAME) == true)
                 {
-                    $this->logMessage("Received command to reload {$MODULE_NAME[1]}.");
-                    $this->dragoon->queueModuleReload($MODULE_NAME[1]);
+                    $this->logMessage("Received command to {$MODULE_NAME[1]} {$MODULE_NAME[2]}.");
+                    switch($MODULE_NAME[1])
+                    {
+                        case 'load':
+                        {
+                            $this->dragoon->queueModuleLoad($MODULE_NAME[2]);
+                            
+                            break;
+                        } // end load
+
+                        case 'unload':
+                        {
+                            $this->dragoon->queueModuleUnload($MODULE_NAME[2]);
+
+                            break;
+                        } // end unload
+
+                        case 'reload':
+                        {
+                            $this->dragoon->queueModuleReload($MODULE_NAME[2]);
+                            
+                            break;
+                        } // end reload
+                    } // end (un|re)?load switch
                 } // end reload
             } // end command
             

@@ -22,6 +22,7 @@
 
 /*!40000 ALTER TABLE `data_handler` DISABLE KEYS */;
 LOCK TABLES `data_handler` WRITE;
+INSERT INTO `data_handler` (`data_handler_id`, `handler_description`, `module_name`, `datatype`, `active`) VALUES (1,'RSS Handler','rss_reader','xml','Y');
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `data_handler` ENABLE KEYS */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

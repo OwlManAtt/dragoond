@@ -24,6 +24,7 @@ CREATE TABLE `data_handler` (
   `data_handler_id` int(10) unsigned NOT NULL auto_increment,
   `handler_description` varchar(75) NOT NULL,
   `module_name` varchar(50) NOT NULL,
+  `datatype` varchar(5) NOT NULL,
   `active` enum('Y','N') NOT NULL default 'Y',
   PRIMARY KEY  (`data_handler_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -35,14 +36,15 @@ CREATE TABLE `data_handler` (
 DROP TABLE IF EXISTS `datasource`;
 CREATE TABLE `datasource` (
   `datasource_id` int(10) unsigned NOT NULL auto_increment,
+  `description` varchar(50) NOT NULL,
   `datasource_url` text NOT NULL,
   `fetch_frequency_secs` int(11) NOT NULL,
   `datetime_last_fetch` datetime NOT NULL,
-  `datasource_handler_id` int(10) unsigned NOT NULL,
+  `data_handler_id` int(10) unsigned NOT NULL,
   `active` enum('Y','N') NOT NULL default 'Y',
   PRIMARY KEY  (`datasource_id`),
-  KEY `datasource_handler_id` (`datasource_handler_id`),
-  CONSTRAINT `datasource_ibfk_1` FOREIGN KEY (`datasource_handler_id`) REFERENCES `data_handler` (`data_handler_id`)
+  KEY `datasource_handler_id` (`data_handler_id`),
+  CONSTRAINT `datasource_ibfk_1` FOREIGN KEY (`data_handler_id`) REFERENCES `data_handler` (`data_handler_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --

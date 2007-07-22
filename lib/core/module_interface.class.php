@@ -6,7 +6,7 @@ interface DragoonModuleInterface
     #protected $module_author;
     #protected $module_type;
 
-    public function __construct(&$dragoon);
+    public function __construct(&$dragoon,&$db);
     public function load();
     public function unload();
     public function reload();
@@ -20,11 +20,13 @@ abstract class DragoonModule implements DragoonModuleInterface
     protected $module_version = '0.0.0';
     protected $module_author = 'N/A';
     protected $module_type = 'FAKE';
+    protected $db = null;
     protected $dragoon = null;
 
-    public function __construct(&$dragoon)
+    public function __construct(&$dragoon,&$db)
     {
         $this->dragoon = $dragoon;
+        $this->db = $db;
     } // end __construct
 
     public function reload()

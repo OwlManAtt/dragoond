@@ -36,6 +36,7 @@ foreach(glob('lib/core/*.class.php') as $filename)
  **/
 class Dragoond extends Daemonize
 {
+    protected $db_config = array();
     protected $db = null;
     protected $dragoon_name = 'Uninitialized Dragoon';
     protected $debug_level = 2;
@@ -96,6 +97,22 @@ class Dragoond extends Daemonize
         return parent::start();
     } // end start
 
+    public function prepareDaemon()
+    {
+        try
+        {
+            $db = $this->dbconnect($this->db_config);
+            $this->db = $db;
+        }
+        catch(SQLError $e)
+        {
+            $this->logMessage('Could not establish database connection.','critical');
+            $this->logMessage($e->__toString(),'debug');
+
+            return false; 
+        } // end db connection failure
+    } // end prepareDaemon
+    
     public function stop()
     {
         $this->logMessage('Dragoon received stop command.','notice');
@@ -121,19 +138,9 @@ class Dragoond extends Daemonize
 
         $config = Spyc::YAMLLoad($file);
 
-        try
-        {
-            $db = $this->dbconnect($config['database_dsn']);
-            $this->db = $db;
-        }
-        catch(SQLError $e)
-        {
-            $this->logMessage('Could not establish database connection.','critical');
-            $this->logMessage($e->__toString(),'debug');
+        $this->db_config = $config['database_dsn'];
 
-            return false; 
-        } // end db connection failure
-        
+               
         // Daemon settings.
         $this->userID = $config['uid'];
         $this->groupID = $config['gid'];
@@ -278,7 +285,7 @@ class Dragoond extends Daemonize
                 
                 $this->logMessage("Loading class $class...");
 
-                $php = '$module_instance = new '.$class_with_suffix.'(&$this);';
+                $php = '$module_instance = new '.$class_with_suffix.'(&$this,&$this->db);';
                 eval($php);
                 
                 $this->loaded_modules[$module] = $module_instance->getModuleInfo();
