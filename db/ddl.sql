@@ -30,6 +30,27 @@ CREATE TABLE `data_handler` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
+-- Table structure for table `data_storage`
+--
+
+DROP TABLE IF EXISTS `data_storage`;
+CREATE TABLE `data_storage` (
+  `data_storage_id` int(10) unsigned NOT NULL auto_increment,
+  `datasource_id` int(10) unsigned NOT NULL,
+  `datetime_added` timestamp NOT NULL default CURRENT_TIMESTAMP,
+  `data_datetime` datetime NOT NULL,
+  `data_title` text character set utf8 NOT NULL,
+  `data_link` text NOT NULL,
+  `data_description` text character set utf8 NOT NULL,
+  `data_author` text NOT NULL,
+  `data_category` text NOT NULL,
+  `checksum` varchar(32) NOT NULL,
+  `processed` enum('N','Y') NOT NULL default 'N',
+  PRIMARY KEY  (`data_storage_id`),
+  KEY `datasource_id` (`datasource_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
 -- Table structure for table `datasource`
 --
 
@@ -45,6 +66,20 @@ CREATE TABLE `datasource` (
   PRIMARY KEY  (`datasource_id`),
   KEY `datasource_handler_id` (`data_handler_id`),
   CONSTRAINT `datasource_ibfk_1` FOREIGN KEY (`data_handler_id`) REFERENCES `data_handler` (`data_handler_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Table structure for table `datasource_filter`
+--
+
+DROP TABLE IF EXISTS `datasource_filter`;
+CREATE TABLE `datasource_filter` (
+  `datasource_filter_id` int(10) unsigned NOT NULL auto_increment,
+  `filter_regexp` text NOT NULL,
+  `datasource_id` int(10) unsigned NOT NULL,
+  `short_name` varchar(25) NOT NULL,
+  PRIMARY KEY  (`datasource_filter_id`),
+  KEY `datasource_id` (`datasource_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --

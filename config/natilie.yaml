@@ -14,6 +14,8 @@ module_dir: /use/share/dragoond/modules
 debug: 0 
 
 default_modules:
+    - data_storage
     - datasource_fetcher
-    - jabber_frontend 
+    - datasource_filter
     - rss_reader
+    - jabber_frontend 

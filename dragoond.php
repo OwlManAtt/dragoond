@@ -202,6 +202,11 @@ class Dragoond extends Daemonize
         {
             foreach($MODULE['registered_run_methods'] as $method)
             {
+                if(is_object($MODULE['instance']) == false)
+                {
+                    $this->logMessage("Module $module_name has had its instance corrupted! '{$MODULE['instance']}' '{$method['method']}'",'emergency');
+                }
+
                 call_user_func_array(array(&$MODULE['instance'],$method['method']),$method['args']);
             } // end method loop
         } // end module loop
@@ -209,6 +214,16 @@ class Dragoond extends Daemonize
         // Rest to give the CPU a bread. 
         sleep(2);
     } // end doTask
+
+    public function getModule($module_name)
+    {
+        if(array_key_exists($module_name,$this->loaded_modules) == true)
+        {
+            return $this->loaded_modules[$module_name]['instance'];
+        }
+
+        return false;
+    } // end getModule
 
     public function queueModuleLoad($module_name)
     {
@@ -271,7 +286,7 @@ class Dragoond extends Daemonize
                 $file = trim(`cat $module_path`);
 
                 // Rename the class, strip shit tags.
-                $file = preg_replace("/class $class extends DragoonModule/i","class $class_with_suffix extends DragoonModule",$file);
+                $file = preg_replace("/class $class extends/i","class $class_with_suffix extends",$file);
                 $file = preg_replace('/^<\?php/i',null,$file);
                 $file = preg_replace('/\?>$/',null,$file);
 
@@ -291,11 +306,16 @@ class Dragoond extends Daemonize
                 $this->loaded_modules[$module] = $module_instance->getModuleInfo();
                 $this->loaded_modules[$module]['registered_run_methods'] = array();
                 $this->loaded_modules[$module]['instance'] = $module_instance;
-                if($this->loaded_modules[$module]['instance']->load() == false)
+
+                // If it's just a helper-type thing (ie, not a true module), don't load it.
+                if(is_subclass_of($this->loaded_modules[$module]['instance'],'DragoonModule'))
                 {
-                    $this->logMessage("$module could not be successfully loaded.",'notice');
-                    unset($this->loaded_modules[$module]);
-                }
+                    if($this->loaded_modules[$module]['instance']->load() == false)
+                    {
+                        $this->logMessage("$module could not be successfully loaded.",'notice');
+                        unset($this->loaded_modules[$module]);
+                    }
+                } // end is module
 
                 unset($this->module_load_queue[$index]);
             } // end load loop
@@ -311,7 +331,33 @@ class Dragoond extends Daemonize
 
         return true;
     } // end registerRunMethod
-   
+
+    public function unregisterRunMethod($module,$method_name,$args=array())
+    {
+        if(array_key_exists($module,$this->loaded_modules) == false)
+        {
+            return false;
+        }
+        
+        foreach($this->loaded_modules[$module]['registered_run_methods'] as $i => $method)
+        {
+            if($method['method'] == $method_name)
+            {
+                unset($this->loaded_modules[$module]['registered_run_methods'][$i]);
+                
+                // Unset collapses things?
+                if(is_array($this->loaded_modules[$module]['registered_run_methods']) == false)
+                {
+                    $this->loaded_modules[$module]['registered_run_methods'] = array();
+                }
+                
+                return true;
+            }
+        } // end module loop
+
+        return false;
+    } // end unregisterRunMethod
+
     // Route a datasource's fatched data to a handler module.
     public function handleDatasource($cached_file_path,$datasource_handler_module)
     {

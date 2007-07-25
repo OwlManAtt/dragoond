@@ -17,6 +17,8 @@ class JabberFrontend extends DragoonModule
 
 	protected $connection;
 	protected $delay_disconnect;
+    protected $last_disconnect_retry;
+    protected $reconnect_interval = 120;
 
 	protected $stream_id;
 	protected $roster;
@@ -144,6 +146,7 @@ class JabberFrontend extends DragoonModule
 
 			if($this->_check_connected())
 			{
+                $this->dragoon->unregisterRunMethod('jabber_frontent','reconnect');
 				$this->connected = TRUE;	// Nathan Fritz
 				return TRUE;
 			}
@@ -160,7 +163,16 @@ class JabberFrontend extends DragoonModule
 		}
 	} // end connect
 
+    public function reconnect()
+    {
+        if(($this->last_disconnect_retry + $this->reconnect_interval) >= time())
+        {
+            $this->connect();
+            $this->last_disconnect_retry = time();
+        }
 
+        return null;
+    } // end reconnect
 
 	public function disconnect()
 	{
@@ -636,6 +648,7 @@ class JabberFrontend extends DragoonModule
 				{
 					$this->connected = FALSE;
 					$this->logMessage('EVENT: Disconnected','debug');
+                    $this->dragoon->registerRunMethod('jabber_frontent','reconnect');
 				}
 				if($this->returned_keep_alive == TRUE)
 				{
