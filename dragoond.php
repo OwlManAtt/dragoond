@@ -211,7 +211,7 @@ class Dragoond extends Daemonize
             } // end method loop
         } // end module loop
         
-        // Rest to give the CPU a bread. 
+        // Rest to give the CPU a break. 
         sleep(2);
     } // end doTask
 
