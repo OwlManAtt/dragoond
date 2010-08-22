@@ -1,0 +1,14 @@
+This was a personal assistant I tried writing in the '00s. It's supposed 
+to be PHP with reloadable classes serving as modules.
+
+It was going to be a daemon supporting multiple interfaces (web,
+IRC, and XMPP) for commands / notifications / etc, but that didn't
+pan out. PHP can't natively redefine classes and the PECL extension
+for it (runkit / classkit) was fucking broken and wouldn't reload
+a class that extended something.
+
+As a result, I did some horrible hack that either didn't work well
+(memory issue maybe? I don't fucking remember if it even worked
+at all) and abandoned the project.
+
+Let this serve as a monument to PHP sucking dick.
